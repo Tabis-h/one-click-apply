@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FiSearch, FiMapPin, FiDollarSign, FiClock, FiExternalLink, FiSettings, FiUser, FiAlertCircle, FiCheckCircle } from 'react-icons/fi';
+import { FiSearch, FiMapPin, FiDollarSign, FiClock, FiExternalLink, FiSettings, FiUser, FiAlertCircle, FiCheckCircle, FiMail, FiPhone, FiBookOpen, FiBriefcase, FiGlobe, FiFlag, FiAward, FiUsers, FiBarChart2, FiLinkedin, FiFileText, FiHeart } from 'react-icons/fi';
 import { auth } from './firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import CombinedJobService from './services/combinedJobService';
@@ -13,6 +13,13 @@ const Dashboard = () => {
   const [apiStatus, setApiStatus] = useState({ tested: false, working: false, error: null });
   
   const jobService = new CombinedJobService();
+
+  // User profile summary card
+  const profile = user && jobs.length > 0 && jobs[0].userProfile ? jobs[0].userProfile : null;
+  // Fallback: use jobsDashboard userProfile if available
+  const userProfile = profile || {};
+
+  console.log('SKILLS DEBUG', userProfile.skills, Array.isArray(userProfile.skills) ? userProfile.skills.map(s => typeof s) : typeof userProfile.skills);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -96,7 +103,6 @@ const Dashboard = () => {
             <div className="flex items-center">
               <h1 className="text-2xl font-bold text-gray-900">OneApply</h1>
             </div>
-            
             {/* API Status Indicator */}
             <div className="flex items-center space-x-4">
               {apiStatus.tested && (
@@ -118,14 +124,12 @@ const Dashboard = () => {
                   )}
                 </div>
               )}
-              
               <div className="flex items-center space-x-2">
                 <FiUser className="text-gray-600" />
                 <span className="text-sm text-gray-700">
                   {user?.email || 'User'}
                 </span>
               </div>
-              
               <button className="p-2 text-gray-600 hover:text-gray-900 transition">
                 <FiSettings size={20} />
               </button>
@@ -136,14 +140,140 @@ const Dashboard = () => {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Welcome Section */}
+        {/* Profile Summary Card */}
         <div className="mb-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">
-            Welcome back, {user?.displayName || user?.email?.split('@')[0] || 'there'}!
-          </h2>
-          <p className="text-gray-600">
-            Here are your personalized job recommendations based on your profile.
-          </p>
+          <div className="bg-white rounded-xl shadow-lg p-6 flex flex-col md:flex-row gap-6 items-center md:items-start">
+            {/* Photo */}
+            <div className="flex-shrink-0">
+              <img
+                src={userProfile.photoURL || 'https://ui-avatars.com/api/?name=User'}
+                alt="Profile"
+                className="w-28 h-28 rounded-xl object-cover border-2 border-indigo-200 shadow"
+              />
+            </div>
+            {/* Details */}
+            <div className="flex-1 w-full grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                  {userProfile.firstName} {userProfile.lastName}
+                  {userProfile.profileCompleteness === 100 && (
+                    <FiCheckCircle className="text-green-500 ml-1" title="Profile Complete" />
+                  )}
+                </h2>
+                <div className="flex items-center gap-2 text-gray-500 mt-1">
+                  <FiMapPin size={16} />
+                  <span>{userProfile.location}</span>
+                </div>
+                <div className="flex items-center gap-2 text-gray-500 mt-1">
+                  <FiMail size={16} />
+                  <span>{userProfile.email}</span>
+                </div>
+                {userProfile.phone && (
+                  <div className="flex items-center gap-2 text-gray-500 mt-1">
+                    <FiPhone size={16} />
+                    <span>{userProfile.phone}</span>
+                  </div>
+                )}
+                <div className="flex items-center gap-2 text-gray-500 mt-1">
+                  <FiBookOpen size={16} />
+                  <span>{userProfile.education}</span>
+                </div>
+                <div className="flex items-center gap-2 text-gray-500 mt-1">
+                  <FiBriefcase size={16} />
+                  <span>{userProfile.experience} ({userProfile.experienceYears || 0} yrs)</span>
+                </div>
+                <div className="flex items-center gap-2 text-gray-500 mt-1">
+                  <FiDollarSign size={16} />
+                  <span>Salary: {userProfile.salaryExpectation ? `₹${userProfile.salaryExpectation}` : userProfile.preferredSalary || 'N/A'}</span>
+                </div>
+                <div className="flex items-center gap-2 text-gray-500 mt-1">
+                  <FiClock size={16} />
+                  <span>Availability: {userProfile.availability}</span>
+                </div>
+                <div className="flex items-center gap-2 text-gray-500 mt-1">
+                  <FiGlobe size={16} />
+                  <span>Work Type: {userProfile.workType} {userProfile.isRemotePreferred && <span className="ml-1 text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded">Remote</span>}</span>
+                </div>
+                <div className="flex items-center gap-2 text-gray-500 mt-1">
+                  <FiFlag size={16} />
+                  <span>Target: {userProfile.targetCountries?.join(', ')}</span>
+                </div>
+                <div className="flex items-center gap-2 text-gray-500 mt-1">
+                  <FiAward size={16} />
+                  <span>Certifications: {userProfile.certifications?.length ? userProfile.certifications.join(', ') : 'None'}</span>
+                </div>
+                <div className="flex items-center gap-2 text-gray-500 mt-1">
+                  <FiUsers size={16} />
+                  <span>Languages: {userProfile.languages?.join(', ')}</span>
+                </div>
+                <div className="flex items-center gap-2 text-gray-500 mt-1">
+                  <FiBarChart2 size={16} />
+                  <span>Profile: {userProfile.profileCompleteness || 0}% complete</span>
+                </div>
+              </div>
+              <div>
+                <div className="mb-2">
+                  <span className="font-semibold text-gray-700">Job Roles:</span>
+                  <div className="flex flex-wrap gap-2 mt-1">
+                    {userProfile.jobRoles?.map((role, i) => (
+                      <span key={i} className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">{role}</span>
+                    ))}
+                  </div>
+                </div>
+                <div className="mb-2">
+                  <span className="font-semibold text-gray-700">Skills:</span>
+                  {/* DEBUG: Show raw skills value on the page for troubleshooting */}
+                  <pre style={{color: 'red', fontSize: '10px', whiteSpace: 'pre-wrap'}}>{JSON.stringify(userProfile.skills, null, 2)}</pre>
+                  <div className="flex flex-wrap gap-2 mt-1">
+                    {userProfile.skills?.map((skill, i) => {
+                      if (typeof skill === 'string') {
+                        return (
+                          <span key={i} className="px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-800">{skill}</span>
+                        );
+                      } else if (skill && typeof skill === 'object') {
+                        return (
+                          <span key={i} className={`px-2 py-1 rounded-full text-xs flex items-center gap-1 ${skill.preferred ? 'bg-indigo-100 text-indigo-800 border border-indigo-300' : 'bg-gray-100 text-gray-800'}`}>
+                            {skill.name}
+                            {skill.preferred && <FiHeart size={12} className="text-red-500" />}
+                          </span>
+                        );
+                      } else {
+                        return null;
+                      }
+                    })}
+                  </div>
+                </div>
+                <div className="mb-2">
+                  <span className="font-semibold text-gray-700">Industries:</span>
+                  <div className="flex flex-wrap gap-2 mt-1">
+                    {userProfile.industries?.map((ind, i) => (
+                      <span key={i} className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">{ind}</span>
+                    ))}
+                  </div>
+                </div>
+                <div className="mb-2">
+                  <span className="font-semibold text-gray-700">Links:</span>
+                  <div className="flex flex-col gap-1 mt-1">
+                    {userProfile.linkedinProfile && (
+                      <a href={userProfile.linkedinProfile} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-blue-600 hover:underline text-xs">
+                        <FiLinkedin size={14} /> LinkedIn
+                      </a>
+                    )}
+                    {userProfile.portfolioWebsite && (
+                      <a href={userProfile.portfolioWebsite} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-indigo-600 hover:underline text-xs">
+                        <FiGlobe size={14} /> Portfolio
+                      </a>
+                    )}
+                    {userProfile.resumeURL && (
+                      <a href={userProfile.resumeURL} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-gray-700 hover:underline text-xs">
+                        <FiFileText size={14} /> Resume
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Search Bar */}
@@ -226,7 +356,6 @@ const Dashboard = () => {
           <h3 className="text-xl font-semibold text-gray-900">
             Recommended Jobs ({filteredJobs.length})
           </h3>
-          
           {filteredJobs.length === 0 ? (
             <div className="text-center py-12">
               <FiSearch className="mx-auto text-gray-400 mb-4" size={48} />
@@ -261,7 +390,6 @@ const Dashboard = () => {
                         )}
                       </div>
                       <p className="text-gray-600 font-medium mb-2">{job.company}</p>
-                      
                       <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 mb-3">
                         <div className="flex items-center">
                           <FiMapPin size={16} className="mr-1" />
@@ -277,7 +405,6 @@ const Dashboard = () => {
                         </div>
                       </div>
                     </div>
-                    
                     <a
                       href={job.url}
                       target="_blank"
@@ -287,14 +414,12 @@ const Dashboard = () => {
                       Apply <FiExternalLink className="ml-2" size={16} />
                     </a>
                   </div>
-                  
                   <p className="text-gray-700 text-sm leading-relaxed">
                     {job.description.length > 200 
                       ? `${job.description.substring(0, 200)}...` 
                       : job.description
                     }
                   </p>
-                  
                   {job.matchScore && (
                     <div className="mt-4 pt-4 border-t border-gray-100">
                       <div className="flex items-center justify-between text-sm">

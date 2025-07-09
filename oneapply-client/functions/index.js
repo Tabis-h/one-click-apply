@@ -308,7 +308,11 @@ exports.searchJobs = functions.https.onRequest((req, res) => {
         // Check skills match
         if (userProfile.skills) {
           userProfile.skills.forEach(skill => {
-            if (jobTitle.includes(skill.toLowerCase()) || jobDescription.includes(skill.toLowerCase())) {
+            const skillName = typeof skill === 'string' ? skill : skill?.name;
+            if (
+              typeof skillName === 'string' &&
+              (jobTitle.includes(skillName.toLowerCase()) || jobDescription.includes(skillName.toLowerCase()))
+            ) {
               relevanceScore += 5;
             }
           });
