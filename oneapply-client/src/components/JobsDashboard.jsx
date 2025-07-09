@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from '../firebase/config';
-import { FiSearch, FiBriefcase, FiDollarSign, FiMapPin, FiClock, FiUser, FiStar, FiExternalLink } from 'react-icons/fi';
+import { FiSearch, FiBriefcase, FiDollarSign, FiMapPin, FiClock, FiUser, FiStar, FiExternalLink, FiHeart } from 'react-icons/fi';
 import { FaRegSadTear, FaRegSmileBeam } from 'react-icons/fa';
 import { RiRemoteControlLine } from 'react-icons/ri';
 import { BsLightningFill, BsGeoAlt, BsCashStack } from 'react-icons/bs';
@@ -298,12 +298,23 @@ const JobsDashboard = () => {
                   <BsLightningFill className="text-gray-400" />
                   Skills
                 </p>
-                <p className="font-medium mt-1">
-                  {userProfile.skills?.slice(0, 3).join(', ') || 'Not specified'}
-                  {userProfile.skills?.length > 3 && (
-                    <span className="text-xs text-gray-500 ml-1">+{userProfile.skills.length - 3} more</span>
+                <div>
+                  {userProfile.skills && userProfile.skills.length > 0 ? (
+                    <>
+                      {userProfile.skills.slice(0, 3).map((skill, i) => (
+                        <span key={i} className={`inline-block px-2 py-1 rounded-full text-xs mr-1 mb-1 ${typeof skill === 'object' && skill.preferred ? 'bg-indigo-100 text-indigo-800 border border-indigo-300' : 'bg-gray-100 text-gray-800'}`}>
+                          {typeof skill === 'string' ? skill : skill.name}
+                          {typeof skill === 'object' && skill.preferred && <FiHeart size={10} className="inline ml-1 text-red-500" />}
+                        </span>
+                      ))}
+                      {userProfile.skills.length > 3 && (
+                        <span className="text-xs text-gray-500 ml-1">+{userProfile.skills.length - 3} more</span>
+                      )}
+                    </>
+                  ) : (
+                    <span className="text-xs text-gray-400">Not specified</span>
                   )}
-                </p>
+                </div>
               </div>
               <div className="bg-gray-50 p-3 rounded-lg">
                 <p className="text-xs text-gray-500 flex items-center gap-1">
