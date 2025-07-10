@@ -13,4 +13,6 @@ body {
   -moz-osx-font-smoothing: grayscale;
   color: #374151; /* gray-700 */
   background-color: #F9FAFB; /* gray-50 */
+  scrollbar-gutter: stable;
+  overflow-y: scroll !important;
 }

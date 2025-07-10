@@ -199,6 +199,19 @@ exports.searchJobs = functions.https.onRequest((req, res) => {
         });
       }
 
+      // Normalize skills to always be an array
+      if (userProfile.skills) {
+        if (Array.isArray(userProfile.skills)) {
+          // already array
+        } else if (typeof userProfile.skills === 'string') {
+          userProfile.skills = userProfile.skills.split(',').map(s => s.trim()).filter(Boolean);
+        } else {
+          userProfile.skills = [];
+        }
+      } else {
+        userProfile.skills = [];
+      }
+
       // Build search parameters from user profile
       const searchQuery = customQuery || buildSearchQuery(userProfile);
       const employmentTypes = getEmploymentTypes(userProfile);

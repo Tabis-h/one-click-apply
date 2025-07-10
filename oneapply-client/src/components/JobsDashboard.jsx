@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from '../firebase/config';
 import { FiSearch, FiBriefcase, FiDollarSign, FiMapPin, FiClock, FiUser, FiStar, FiExternalLink, FiHeart } from 'react-icons/fi';
 import { FaRegSadTear, FaRegSmileBeam } from 'react-icons/fa';
 import { RiRemoteControlLine } from 'react-icons/ri';
 import { BsLightningFill, BsGeoAlt, BsCashStack } from 'react-icons/bs';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 // Helper function to get time of day greeting
 const getTimeOfDay = () => {
@@ -46,6 +48,64 @@ const JobCardSkeleton = () => (
   </div>
 );
 
+// ResumePreview component
+const ResumePreview = ({ userProfile }) => (
+  <div className="font-sans text-gray-900 w-full max-w-[600px] mx-auto">
+    <div className="flex flex-col md:flex-row md:items-center md:justify-between border-b-2 border-blue-600 pb-4 mb-4">
+      <div>
+        <h1 className="text-3xl font-bold text-blue-700">{userProfile.firstName} {userProfile.lastName}</h1>
+        <div className="text-sm text-gray-700 mt-1">{userProfile.email} | {userProfile.phone} | {userProfile.location}</div>
+      </div>
+    </div>
+    <div className="mb-4">
+      <h2 className="text-lg font-semibold text-blue-600 mb-1">Professional Summary</h2>
+      <p className="text-sm text-gray-800">{userProfile.summary || 'Motivated professional seeking new opportunities.'}</p>
+    </div>
+    <div className="mb-4">
+      <h2 className="text-lg font-semibold text-blue-600 mb-1">Skills</h2>
+      <div className="flex flex-wrap gap-2">
+        {(Array.isArray(userProfile.skills) ? userProfile.skills : typeof userProfile.skills === 'string' ? userProfile.skills.split(',').map(s => s.trim()).filter(Boolean) : []).map((skill, i) => (
+          <span key={i} className="px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-medium border border-blue-200">{typeof skill === 'string' ? skill : skill.name}</span>
+        ))}
+      </div>
+    </div>
+    <div className="mb-4">
+      <h2 className="text-lg font-semibold text-blue-600 mb-1">Experience</h2>
+      <div>
+        <div className="font-semibold">{userProfile.position || 'Position'}</div>
+        <div className="text-sm text-gray-700">{userProfile.companyName || 'Company'} | {userProfile.startDate || ''} - {userProfile.endDate || 'Present'}</div>
+        <div className="text-sm text-gray-800 mt-1">{userProfile.description || 'Description of responsibilities and achievements.'}</div>
+      </div>
+    </div>
+    <div className="mb-4">
+      <h2 className="text-lg font-semibold text-blue-600 mb-1">Education</h2>
+      <div>
+        <div className="font-semibold">{userProfile.degree || 'Degree'} in {userProfile.fieldOfStudy || 'Field'}</div>
+        <div className="text-sm text-gray-700">{userProfile.schoolName || 'School'} | {userProfile.startYear || ''} - {userProfile.endYear || 'Present'}</div>
+        <div className="text-sm text-gray-800 mt-1">GPA: {userProfile.gpa || '-'}</div>
+      </div>
+    </div>
+    <div className="mb-4">
+      <h2 className="text-lg font-semibold text-blue-600 mb-1">Projects</h2>
+      <div>
+        <div className="font-semibold">{userProfile.projectName || 'Project Name'}</div>
+        <div className="text-sm text-gray-700">{userProfile.startDate || ''} - {userProfile.endDate || 'Present'}</div>
+        <div className="text-sm text-gray-800 mt-1">{userProfile.technologies || 'Technologies used'}</div>
+        <div className="text-sm text-gray-800 mt-1">{userProfile.description || 'Project description.'}</div>
+      </div>
+    </div>
+    <div>
+      <h2 className="text-lg font-semibold text-blue-600 mb-1">Links</h2>
+      <div className="flex flex-wrap gap-2">
+        {userProfile.linkedin && <a href={userProfile.linkedin} className="text-blue-700 underline text-xs" target="_blank" rel="noopener noreferrer">LinkedIn</a>}
+        {userProfile.github && <a href={userProfile.github} className="text-blue-700 underline text-xs" target="_blank" rel="noopener noreferrer">GitHub</a>}
+        {userProfile.portfolio && <a href={userProfile.portfolio} className="text-blue-700 underline text-xs" target="_blank" rel="noopener noreferrer">Portfolio</a>}
+        {userProfile.otherLink && <a href={userProfile.otherLink} className="text-blue-700 underline text-xs" target="_blank" rel="noopener noreferrer">Other</a>}
+      </div>
+    </div>
+  </div>
+);
+
 
 const JobsDashboard = () => {
   const [user, loading, error] = useAuthState(auth);
@@ -60,6 +120,7 @@ const JobsDashboard = () => {
     remoteOnly: false,
     highMatchOnly: false
   });
+  const navigate = useNavigate();
 
   // Get the functions URL based on environment
   const getFunctionsUrl = () => {
@@ -278,68 +339,96 @@ const JobsDashboard = () => {
 
         {/* User Profile Summary Card */}
         {userProfile && (
-          <div className="bg-white rounded-xl shadow-sm p-6 mb-6 border-l-4 border-blue-500">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <FiUser className="text-blue-500" />
-              Your Profile Summary
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-gray-50 p-3 rounded-lg">
-                <p className="text-xs text-gray-500 flex items-center gap-1">
-                  <FiBriefcase className="text-gray-400" />
-                  Job Roles
-                </p>
-                <p className="font-medium mt-1">
-                  {userProfile.jobRoles?.join(', ') || 'Not specified'}
-                </p>
-              </div>
-              <div className="bg-gray-50 p-3 rounded-lg">
-                <p className="text-xs text-gray-500 flex items-center gap-1">
-                  <BsLightningFill className="text-gray-400" />
-                  Skills
-                </p>
-                <div>
-                  {userProfile.skills && userProfile.skills.length > 0 ? (
-                    <>
-                      {userProfile.skills.slice(0, 3).map((skill, i) => (
-                        <span key={i} className={`inline-block px-2 py-1 rounded-full text-xs mr-1 mb-1 ${typeof skill === 'object' && skill.preferred ? 'bg-indigo-100 text-indigo-800 border border-indigo-300' : 'bg-gray-100 text-gray-800'}`}>
-                          {typeof skill === 'string' ? skill : skill.name}
-                          {typeof skill === 'object' && skill.preferred && <FiHeart size={10} className="inline ml-1 text-red-500" />}
-                        </span>
-                      ))}
-                      {userProfile.skills.length > 3 && (
-                        <span className="text-xs text-gray-500 ml-1">+{userProfile.skills.length - 3} more</span>
-                      )}
-                    </>
-                  ) : (
-                    <span className="text-xs text-gray-400">Not specified</span>
-                  )}
+          <>
+            <div className="bg-white rounded-xl shadow-sm p-6 mb-2 border-l-4 border-blue-500">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <FiUser className="text-blue-500" />
+                Your Profile Summary
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <p className="text-xs text-gray-500 flex items-center gap-1">
+                    <FiBriefcase className="text-gray-400" />
+                    Job Roles
+                  </p>
+                  <p className="font-medium mt-1">
+                    {userProfile.jobRoles?.join(', ') || 'Not specified'}
+                  </p>
+                </div>
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <p className="text-xs text-gray-500 flex items-center gap-1">
+                    <BsLightningFill className="text-gray-400" />
+                    Skills
+                  </p>
+                  <div>
+                    {(Array.isArray(userProfile.skills)
+                      ? userProfile.skills
+                      : typeof userProfile.skills === 'string'
+                        ? userProfile.skills.split(',').map(s => s.trim()).filter(Boolean)
+                        : []).length > 0 ? (
+                      <>
+                        {(Array.isArray(userProfile.skills)
+                          ? userProfile.skills
+                          : typeof userProfile.skills === 'string'
+                            ? userProfile.skills.split(',').map(s => s.trim()).filter(Boolean)
+                            : [])
+                          .slice(0, 3)
+                          .map((skill, i) => (
+                            <span key={i} className={`inline-block px-2 py-1 rounded-full text-xs mr-1 mb-1 ${typeof skill === 'object' && skill.preferred ? 'bg-indigo-100 text-indigo-800 border border-indigo-300' : 'bg-gray-100 text-gray-800'}`}>
+                              {typeof skill === 'string' ? skill : skill.name}
+                              {typeof skill === 'object' && skill.preferred && <FiHeart size={10} className="inline ml-1 text-red-500" />}
+                            </span>
+                          ))}
+                        {(Array.isArray(userProfile.skills)
+                          ? userProfile.skills
+                          : typeof userProfile.skills === 'string'
+                            ? userProfile.skills.split(',').map(s => s.trim()).filter(Boolean)
+                            : []).length > 3 && (
+                          <span className="text-xs text-gray-500 ml-1">+{(Array.isArray(userProfile.skills)
+                            ? userProfile.skills
+                            : typeof userProfile.skills === 'string'
+                              ? userProfile.skills.split(',').map(s => s.trim()).filter(Boolean)
+                              : []).length - 3} more</span>
+                        )}
+                      </>
+                    ) : (
+                      <span className="text-xs text-gray-400">Not specified</span>
+                    )}
+                  </div>
+                </div>
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <p className="text-xs text-gray-500 flex items-center gap-1">
+                    <FiClock className="text-gray-400" />
+                    Work Type
+                  </p>
+                  <p className="font-medium capitalize mt-1">
+                    {userProfile.workType || 'Not specified'}
+                  </p>
+                </div>
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <p className="text-xs text-gray-500 flex items-center gap-1">
+                    <RiRemoteControlLine className="text-gray-400" />
+                    Remote Preferred
+                  </p>
+                  <p className="font-medium mt-1">
+                    {userProfile.isRemotePreferred ? (
+                      <span className="text-green-600">Yes</span>
+                    ) : (
+                      <span className="text-gray-600">No</span>
+                    )}
+                  </p>
                 </div>
               </div>
-              <div className="bg-gray-50 p-3 rounded-lg">
-                <p className="text-xs text-gray-500 flex items-center gap-1">
-                  <FiClock className="text-gray-400" />
-                  Work Type
-                </p>
-                <p className="font-medium capitalize mt-1">
-                  {userProfile.workType || 'Not specified'}
-                </p>
-              </div>
-              <div className="bg-gray-50 p-3 rounded-lg">
-                <p className="text-xs text-gray-500 flex items-center gap-1">
-                  <RiRemoteControlLine className="text-gray-400" />
-                  Remote Preferred
-                </p>
-                <p className="font-medium mt-1">
-                  {userProfile.isRemotePreferred ? (
-                    <span className="text-green-600">Yes</span>
-                  ) : (
-                    <span className="text-gray-600">No</span>
-                  )}
-                </p>
-              </div>
             </div>
-          </div>
+            <div className="flex justify-end mb-6">
+              <button
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold shadow hover:bg-blue-700 transition"
+                onClick={() => navigate('/resume')}
+              >
+                Generate Resume
+              </button>
+            </div>
+          </>
         )}
 
         {/* Search Section */}
