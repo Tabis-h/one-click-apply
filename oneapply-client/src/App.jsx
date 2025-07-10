@@ -7,6 +7,7 @@ import Signup from './Signup';
 import ProfileSetup from './ProfileSetup';
 import JobsDashboard from './components/JobsDashboard';
 import ProfilePage from './pages/ProfilePage';
+import ResumeBuilder from './components/ResumeBuilder';
 import './App.css';
 
 // Protected Route component
@@ -52,6 +53,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <ProfilePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/resume"
+            element={
+              <ProtectedRoute>
+                <ResumeBuilder />
               </ProtectedRoute>
             }
           />
