@@ -7,7 +7,7 @@ import Signup from './Signup';
 import ProfileSetup from './ProfileSetup';
 import JobsDashboard from './components/JobsDashboard';
 import ProfilePage from './pages/ProfilePage';
-import ResumeBuilder from './components/ResumeBuilder';
+import ResumeBuilder from './pages/ResumeBuilder';
 import './App.css';
 
 // Protected Route component
@@ -57,7 +57,7 @@ function App() {
             }
           />
           <Route
-            path="/resume"
+            path="/resume-builder"
             element={
               <ProtectedRoute>
                 <ResumeBuilder />

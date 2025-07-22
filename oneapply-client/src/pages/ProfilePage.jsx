@@ -15,8 +15,6 @@ const ProfilePage = () => {
   const [activeSection, setActiveSection] = useState('summary');
   const [editModal, setEditModal] = useState(null);
   const [editValues, setEditValues] = useState({});
-  const [resumeFile, setResumeFile] = useState(null);
-  const [uploading, setUploading] = useState(false);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   const navigate = useNavigate();
   const [degreeOptions, setDegreeOptions] = useState([]);
@@ -62,7 +60,6 @@ const ProfilePage = () => {
     if (userProfile?.firstName && userProfile?.lastName && userProfile?.email) score += 10;
     if (userProfile?.education) score += 10;
     if (userProfile?.skills && userProfile.skills.length > 0) score += 10;
-    if (userProfile?.resumeURL) score += 10;
     if (userProfile?.jobRoles && userProfile.jobRoles.length > 0) score += 10;
     if (userProfile?.projects && userProfile.projects.length > 0) score += 10;
     if (userProfile?.industries && userProfile.industries.length > 0) score += 10;
@@ -82,16 +79,10 @@ const ProfilePage = () => {
     { key: 'education', label: 'Education', icon: <FiBookOpen /> },
     { key: 'skills', label: 'Skills', icon: <FiAward /> },
     { key: 'projects', label: 'Projects', icon: <FiFileText /> },
-    { key: 'resume', label: 'Resume', icon: <FiUpload /> },
     { key: 'links', label: 'Social Links', icon: <FiLink /> },
   ];
 
   // Section renderers
-  const handleGenerateResume = () => {
-    // Placeholder: implement resume generation modal/logic here
-    alert('Resume generation coming soon!');
-  };
-
   const renderSection = () => {
     switch (activeSection) {
       case 'summary':
@@ -101,7 +92,7 @@ const ProfilePage = () => {
           email: userProfile.email || '',
           phone: userProfile.phone || '',
           location: userProfile.location || '',
-        })} onGenerateResume={handleGenerateResume} />;
+        })} />;
       case 'experience':
         return <ExperienceSection userProfile={userProfile} onEdit={() => openEdit('experience', {
           companyName: userProfile.companyName || '',
@@ -134,8 +125,6 @@ const ProfilePage = () => {
           endDate: userProfile.endDate || '',
           technologies: userProfile.technologies || '',
         })} />;
-      case 'resume':
-        return <ResumeSection userProfile={userProfile} resumeFile={resumeFile} setResumeFile={setResumeFile} uploading={uploading} setUploading={setUploading} user={user} setUserProfile={setUserProfile} showToast={showToast} />;
       case 'links':
         return <LinksSection userProfile={userProfile} onEdit={() => openEdit('links', {
           portfolio: userProfile.portfolio || '',
@@ -176,7 +165,6 @@ const ProfilePage = () => {
   const completionTips = [
     { label: 'Add your education', done: !!userProfile.education },
     { label: 'Add your skills', done: userProfile.skills && userProfile.skills.length > 0 },
-    { label: 'Upload your resume', done: !!userProfile.resumeURL },
     { label: 'Add work experience', done: !!userProfile.companyName },
     { label: 'Add a project', done: !!userProfile.projectName },
     { label: 'Add social links', done: !!userProfile.linkedin || !!userProfile.github },
@@ -327,7 +315,7 @@ const ProfilePage = () => {
 };
 
 // --- Section Components ---
-const SummarySection = ({ userProfile, onEdit, onGenerateResume }) => (
+const SummarySection = ({ userProfile, onEdit }) => (
   <div className="bg-white rounded-xl shadow p-6 mb-6">
     <div className="flex items-center justify-between mb-2">
       <div className="text-xl font-bold">Profile Summary</div>
@@ -338,14 +326,6 @@ const SummarySection = ({ userProfile, onEdit, onGenerateResume }) => (
       <div><span className="font-semibold">Email:</span> {userProfile.email}</div>
       <div><span className="font-semibold">Phone:</span> {userProfile.phone || '-'}</div>
       <div><span className="font-semibold">Location:</span> {userProfile.location || '-'}</div>
-    </div>
-    <div className="mt-6 flex justify-end">
-      <button
-        className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold shadow hover:bg-blue-700 transition"
-        onClick={onGenerateResume}
-      >
-        Generate Resume
-      </button>
     </div>
   </div>
 );
@@ -422,34 +402,6 @@ const ProjectsSection = ({ userProfile, onEdit }) => (
       <div><span className="font-semibold">End Date:</span> {userProfile.endDate || '-'}</div>
       <div className="md:col-span-2"><span className="font-semibold">Technologies:</span> {userProfile.technologies || '-'}</div>
     </div>
-  </div>
-);
-
-const ResumeSection = ({ userProfile, resumeFile, setResumeFile, uploading, setUploading, user, setUserProfile, showToast }) => (
-  <div className="bg-white rounded-xl shadow p-6 mb-6">
-    <div className="flex items-center justify-between mb-2">
-      <div className="text-xl font-bold">Resume</div>
-      <label htmlFor="resume-upload" className="p-2 rounded hover:bg-gray-100 cursor-pointer"><FiUpload /></label>
-      <input id="resume-upload" type="file" className="hidden" accept=".pdf,.doc,.docx" onChange={e => setResumeFile(e.target.files[0])} />
-    </div>
-    {userProfile.resumeURL ? (
-      <div className="flex items-center gap-4">
-        <a href={userProfile.resumeURL} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-indigo-600 hover:underline"><FiFileText /> {userProfile.resumeFilename || 'resume.pdf'}</a>
-        <span className="px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded">Default</span>
-        <span className="text-xs text-gray-500">Last uploaded: {userProfile.resumeLastUpdated ? new Date(userProfile.resumeLastUpdated?.toDate?.() || userProfile.resumeLastUpdated).toLocaleString() : '-'}</span>
-      </div>
-    ) : (
-      <div className="text-gray-400">No resume uploaded</div>
-    )}
-    {resumeFile && (
-      <div className="mt-4 p-3 bg-blue-50 rounded-lg flex items-center justify-between">
-        <span className="text-sm text-blue-800">Ready to upload: {resumeFile.name}</span>
-        <div className="flex gap-2">
-          <button onClick={() => setResumeFile(null)} className="px-3 py-1 text-xs text-gray-600 hover:text-gray-800">Cancel</button>
-          <button onClick={async () => { setUploading(true); try { const storageRef = ref(storage, `resumes/${user.uid}/${resumeFile.name}`); await uploadBytes(storageRef, resumeFile); const downloadURL = await getDownloadURL(storageRef); const userDocRef = doc(db, 'users', user.uid); await updateDoc(userDocRef, { resumeURL: downloadURL, resumeFilename: resumeFile.name, resumeLastUpdated: new Date() }); setUserProfile(prev => ({ ...prev, resumeURL: downloadURL, resumeFilename: resumeFile.name, resumeLastUpdated: new Date() })); setResumeFile(null); showToast('Resume uploaded successfully!'); } catch (error) { showToast('Error uploading resume', 'error'); } setUploading(false); }} disabled={uploading} className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 disabled:opacity-50">{uploading ? 'Uploading...' : 'Upload'}</button>
-        </div>
-      </div>
-    )}
   </div>
 );
 
